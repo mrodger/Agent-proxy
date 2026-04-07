@@ -1,0 +1,18 @@
+{
+  "name": "stockade-datum",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/proxy",
+    "packages/orchestrator",
+    "packages/worker"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "dev:proxy": "npm run dev -w packages/proxy",
+    "dev:orchestrator": "npm run dev -w packages/orchestrator"
+  }
+}

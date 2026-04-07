@@ -1,0 +1,77 @@
+proxy:
+  host: "0.0.0.0"
+
+  provider:
+    # File-based credential provider.
+    # Credentials stored as plain files: credentials/<key> (e.g., credentials/openai/api-key)
+    read: "cat ${CRED_DIR}/{key}"
+    write: "tee ${CRED_DIR}/{key}"
+    update: "tee ${CRED_DIR}/{key}"
+    cache_ttl: 300
+
+  policy:
+    default: deny
+    rules:
+      # Anthropic API — Claude SDK uses OAuth, but agents may call Messages API directly
+      - host: "api.anthropic.com"
+        action: allow
+      # OpenAI API — for agents that use OpenAI tools
+      - host: "api.openai.com"
+        action: allow
+      # GitHub API
+      - host: "api.github.com"
+        action: allow
+      - host: "*.github.com"
+        action: allow
+      # Tavily (search)
+      - host: "api.tavily.com"
+        action: allow
+      # Brave Search
+      - host: "api.search.brave.com"
+        action: allow
+      # Localhost (gateway, health checks, inter-agent)
+      - host: "127.0.0.1"
+        action: allow
+      - host: "localhost"
+        action: allow
+      - host: "host.docker.internal"
+        action: allow
+
+  http:
+    port: 10255
+    tls:
+      ca_cert: "/var/lib/datum-proxy/ca.crt"
+      ca_key: "/var/lib/datum-proxy/ca.key"
+    strip_headers:
+      - authorization
+      - x-api-key
+      - proxy-authorization
+    routes:
+      # OpenAI: inject API key as Bearer token
+      - host: "api.openai.com"
+        credential: "openai/api-key"
+        inject:
+          header: "authorization"
+          format: "Bearer {value}"
+      # GitHub: inject PAT as Bearer token
+      - host: "api.github.com"
+        credential: "github/pat"
+        inject:
+          header: "authorization"
+          format: "Bearer {value}"
+      # Tavily: inject API key as Bearer token
+      - host: "api.tavily.com"
+        credential: "tavily/api-key"
+        inject:
+          header: "authorization"
+          format: "Bearer {value}"
+      # Brave: inject API key as subscription header
+      - host: "api.search.brave.com"
+        credential: "brave/api-key"
+        inject:
+          header: "x-subscription-token"
+
+  gateway:
+    port: 10256
+    token_ttl: 86400
+    ref_ttl: 300

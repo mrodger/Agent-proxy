@@ -1,0 +1,268 @@
+services:
+  proxy:
+    build:
+      context: ./packages/proxy
+    container_name: datum-proxy
+    restart: unless-stopped
+    ports:
+    - 127.0.0.1:10255:10255
+    - 127.0.0.1:10256:10256
+    volumes:
+    - ./config:/config:ro
+    - ./credentials:/credentials:ro
+    - proxy-tls:/var/lib/datum-proxy
+    environment:
+    - GATEWAY_SECRET=${GATEWAY_SECRET}
+    - CRED_DIR=/credentials
+    - CONFIG_DIR=/config
+    networks:
+    - datum-internal
+    - datum-external
+  gateway:
+    build:
+      context: ./packages/orchestrator
+    container_name: datum-gateway
+    restart: unless-stopped
+    depends_on:
+      proxy:
+        condition: service_started
+    ports:
+    - 0.0.0.0:8095:8095
+    volumes:
+    - ./config:/config:ro
+    - ./data:/data
+    environment:
+    - GATEWAY_PORT=8095
+    - GATEWAY_SECRET=${GATEWAY_SECRET}
+    - JWT_SECRET=${JWT_SECRET}
+    - USER_2FA_SECRET=${USER_2FA_SECRET}
+    - GMAIL_CLIENT_ID=${GMAIL_CLIENT_ID}
+    - GMAIL_CLIENT_SECRET=${GMAIL_CLIENT_SECRET}
+    - GMAIL_REFRESH_TOKEN=${GMAIL_REFRESH_TOKEN}
+    - GMAIL_TOKEN_URI=${GMAIL_TOKEN_URI}
+    - GMAIL_FROM=${GMAIL_FROM:-marcus@geofabnz.com}
+    - GMAIL_TO=${GMAIL_TO:-marcus@geofabnz.com}
+    - GATEWAY_OWNER_EMAIL=${GATEWAY_OWNER_EMAIL}
+    - WORKER_SECRET_DEVELOPER=${WORKER_SECRET_DEVELOPER}
+    - WORKER_SECRET_RESEARCHER=${WORKER_SECRET_RESEARCHER}
+    - WORKER_SECRET_DESIGNER=${WORKER_SECRET_DESIGNER}
+    - CONFIG_DIR=/config
+    - DATA_DIR=/data
+    - PROJECT_ROOT=/app
+    - WORKER_SECRET_PEER_REVIEW=${WORKER_SECRET_PEER_REVIEW}
+    networks:
+    - datum-internal
+    - datum-external
+  worker-developer:
+    build:
+      context: ./packages/worker
+    container_name: datum-worker-developer
+    restart: unless-stopped
+    depends_on:
+      proxy:
+        condition: service_started
+    volumes:
+    - ./credentials/claude-oauth.json:/home/worker/.claude/.credentials.json:ro
+    - ./config/agents/developer.yaml:/config/agent.yaml:ro
+    - proxy-tls:/var/lib/datum-proxy:ro
+    - developer-workspace:/workspace
+    environment:
+    - WORKER_ID=developer
+    - PORT=3001
+    - HTTP_PROXY=http://datum-proxy:10255
+    - HTTPS_PROXY=http://datum-proxy:10255
+    - NODE_EXTRA_CA_CERTS=/var/lib/datum-proxy/ca.crt
+    - WORKER_SECRET=${WORKER_SECRET_DEVELOPER}
+    networks:
+    - datum-internal
+  worker-admin:
+    build:
+      context: ./packages/worker
+    container_name: datum-worker-admin
+    restart: unless-stopped
+    depends_on:
+      proxy:
+        condition: service_started
+    volumes:
+    - ./credentials/claude-oauth.json:/home/worker/.claude/.credentials.json:ro
+    - ./config/agents/admin.yaml:/config/agent.yaml:ro
+    - proxy-tls:/var/lib/datum-proxy:ro
+    - admin-workspace:/workspace
+    environment:
+    - WORKER_ID=admin
+    - PORT=3004
+    - HTTP_PROXY=http://datum-proxy:10255
+    - HTTPS_PROXY=http://datum-proxy:10255
+    - NODE_EXTRA_CA_CERTS=/var/lib/datum-proxy/ca.crt
+    - WORKER_SECRET=${WORKER_SECRET_ADMIN}
+    networks:
+    - datum-internal
+    expose:
+    - '3004'
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:3004/health
+      interval: 10s
+      timeout: 5s
+      retries: 3
+  worker-researcher:
+    build:
+      context: ./packages/worker
+    container_name: datum-worker-researcher
+    restart: unless-stopped
+    depends_on:
+      proxy:
+        condition: service_started
+    volumes:
+    - ./credentials/claude-oauth.json:/home/worker/.claude/.credentials.json:ro
+    - ./config/agents/researcher.yaml:/config/agent.yaml:ro
+    - proxy-tls:/var/lib/datum-proxy:ro
+    - researcher-workspace:/workspace
+    environment:
+    - WORKER_ID=researcher
+    - PORT=3002
+    - HTTP_PROXY=http://datum-proxy:10255
+    - HTTPS_PROXY=http://datum-proxy:10255
+    - NODE_EXTRA_CA_CERTS=/var/lib/datum-proxy/ca.crt
+    - WORKER_SECRET=${WORKER_SECRET_RESEARCHER}
+    networks:
+    - datum-internal
+  worker-designer:
+    build:
+      context: ./packages/worker
+    container_name: datum-worker-designer
+    restart: unless-stopped
+    depends_on:
+      proxy:
+        condition: service_started
+    volumes:
+    - ./credentials/claude-oauth.json:/home/worker/.claude/.credentials.json:ro
+    - ./config/agents/designer.yaml:/config/agent.yaml:ro
+    - proxy-tls:/var/lib/datum-proxy:ro
+    - designer-workspace:/workspace
+    environment:
+    - WORKER_ID=designer
+    - PORT=3003
+    - HTTP_PROXY=http://datum-proxy:10255
+    - HTTPS_PROXY=http://datum-proxy:10255
+    - NODE_EXTRA_CA_CERTS=/var/lib/datum-proxy/ca.crt
+    - WORKER_SECRET=${WORKER_SECRET_DESIGNER}
+    networks:
+    - datum-internal
+  worker-gis:
+    build:
+      context: ./packages/worker
+    container_name: datum-worker-gis
+    restart: unless-stopped
+    depends_on:
+      proxy:
+        condition: service_started
+    volumes:
+    - ./credentials/claude-oauth.json:/home/worker/.claude/.credentials.json:ro
+    - ./config/agents/gis.yaml:/config/agent.yaml:ro
+    - proxy-tls:/var/lib/datum-proxy:ro
+    - gis-workspace:/workspace
+    environment:
+    - WORKER_ID=gis
+    - PORT=3005
+    - HTTP_PROXY=http://datum-proxy:10255
+    - HTTPS_PROXY=http://datum-proxy:10255
+    - NODE_EXTRA_CA_CERTS=/var/lib/datum-proxy/ca.crt
+    - WORKER_SECRET=${WORKER_SECRET_GIS}
+    networks:
+    - datum-internal
+    expose:
+    - '3005'
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:3005/health
+      interval: 10s
+      timeout: 5s
+      retries: 3
+  worker-security:
+    build:
+      context: ./packages/worker
+    container_name: datum-worker-security
+    restart: unless-stopped
+    depends_on:
+      proxy:
+        condition: service_started
+    volumes:
+    - ./credentials/claude-oauth.json:/home/worker/.claude/.credentials.json:ro
+    - ./config/agents/security.yaml:/config/agent.yaml:ro
+    - proxy-tls:/var/lib/datum-proxy:ro
+    - security-workspace:/workspace
+    environment:
+    - WORKER_ID=security
+    - PORT=3006
+    - HTTP_PROXY=http://datum-proxy:10255
+    - HTTPS_PROXY=http://datum-proxy:10255
+    - NODE_EXTRA_CA_CERTS=/var/lib/datum-proxy/ca.crt
+    - WORKER_SECRET=${WORKER_SECRET_SECURITY}
+    networks:
+    - datum-internal
+    expose:
+    - '3006'
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:3006/health
+      interval: 10s
+      timeout: 5s
+      retries: 3
+  worker-peer-review:
+    build:
+      context: ./packages/worker
+    container_name: datum-worker-peer-review
+    restart: unless-stopped
+    depends_on:
+      proxy:
+        condition: service_started
+    volumes:
+    - ./credentials/claude-oauth.json:/home/worker/.claude/.credentials.json:ro
+    - ./config/agents/peer-review.yaml:/config/agent.yaml:ro
+    - proxy-tls:/var/lib/datum-proxy:ro
+    environment:
+    - WORKER_ID=peer-review
+    - PORT=3007
+    - HTTP_PROXY=http://datum-proxy:10255
+    - HTTPS_PROXY=http://datum-proxy:10255
+    - NODE_EXTRA_CA_CERTS=/var/lib/datum-proxy/ca.crt
+    - WORKER_SECRET=${WORKER_SECRET_PEER_REVIEW}
+    networks:
+    - datum-internal
+    expose:
+    - '3007'
+    tmpfs:
+    - /workspace
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:3007/health
+      interval: 10s
+      timeout: 5s
+      retries: 3
+volumes:
+  proxy-tls: null
+  developer-workspace: null
+  researcher-workspace: null
+  designer-workspace: null
+  gis-workspace: null
+  security-workspace: null
+  admin-workspace: null
+networks:
+  datum-internal:
+    driver: bridge
+    internal: true
+  datum-external:
+    driver: bridge

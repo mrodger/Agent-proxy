@@ -1,0 +1,37 @@
+{
+  "name": "@stockade-datum/orchestrator",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx watch src/index.ts",
+    "gateway": "tsx src/gateway.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "^0.1.0",
+    "@hono/node-server": "^1.0.0",
+    "@simplewebauthn/server": "^11.0.0",
+    "@simplewebauthn/types": "^11.0.0",
+    "better-sqlite3": "^11.0.0",
+    "execa": "^9.0.0",
+    "googleapis": "^171.4.0",
+    "hono": "^4.0.0",
+    "js-yaml": "^4.1.0",
+    "jsonwebtoken": "^9.0.0",
+    "nodemailer": "^8.0.4",
+    "qrcode": "^1.5.0",
+    "speakeasy": "^2.0.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.0.0",
+    "@types/js-yaml": "^4.0.0",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^22.0.0",
+    "@types/nodemailer": "^7.0.11",
+    "@types/qrcode": "^1.5.6",
+    "tsx": "^4.0.0",
+    "typescript": "^5.6.0"
+  }
+}

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Datum — Multi-agent Intelligence</title>
+
+  <!-- PWA / mobile -->
+  <meta name="theme-color" content="#f0f1f0">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Gateway">
+  <link rel="manifest" href="manifest.json">
+
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <link rel="stylesheet" href="style.css?v=1">
+</head>
+<body>
+  <div id="app"><p style="padding:40px;font-family:monospace;color:#b84030;">Loading…</p></div>
+  <script>
+    function showError(msg) {
+      document.getElementById('app').innerHTML =
+        '<pre style="padding:24px;color:#b84030;font-family:monospace;font-size:12px;white-space:pre-wrap;">' + msg + '</pre>';
+    }
+    window.onerror = (msg, src, line, col, err) => {
+      showError('JS Error: ' + msg + '\n' + src + ':' + line + ':' + col + '\n' + (err && err.stack || ''));
+    };
+    window.onunhandledrejection = (e) => {
+      showError('Async Error: ' + (e.reason && (e.reason.stack || e.reason.message || e.reason) || e));
+    };
+  </script>
+  <script src="app.js?v=5"></script>
+  <script>
+    // Unregister any stale service workers
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(regs => {
+        regs.forEach(r => r.unregister());
+      });
+    }
+  </script>
+</body>
+</html>
