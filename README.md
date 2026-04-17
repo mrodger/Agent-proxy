@@ -167,8 +167,6 @@ Source code will be added to `src/` once extracted from the development environm
 
 Built as part of the Datum platform — a homelab multi-agent orchestration system running on a Proxmox VM cluster. The containment architecture was derived from a study of Stockade (a multi-agent Claude orchestrator), redesigned around the specific threat model of autonomous Claude Code agents.
 
-Built without a dedicated development environment, without enterprise tooling, on a constrained token budget. The security architecture was prioritised because the attack surface is real and the consequences of getting it wrong (in a platform running autonomous agents with internet access) are significant.
-
 ---
 
 *Implementation date: March–April 2026*
